@@ -65,7 +65,7 @@ func addTestPhoto(t *testing.T, app *application, id string, hidden bool) {
 	if hidden {
 		flag = 1
 	}
-	if _, err := app.db.Exec(`INSERT INTO photos(id, filename, label, hidden, created_at) VALUES(?, ?, ?, ?, ?)`, id, name, "test", flag, "2026-01-01T00:00:00Z"); err != nil {
+	if _, err := app.db.Exec(`INSERT INTO photos(id, filename, title, hidden, created_at) VALUES(?, ?, ?, ?, ?)`, id, name, "test", flag, "2026-01-01T00:00:00Z"); err != nil {
 		t.Fatal(err)
 	}
 }

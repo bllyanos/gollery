@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bulk upload photos</title>
+  <link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header"><div class="identity">Family gallery</div><span class="header-note">Administration</span></header>
+    <main class="bulk-layout">
+      <a class="return-link" href="/admin">← Back to photo management</a>
+      <div class="admin-hero"><div><p class="eyebrow">Administration / upload</p><h1>Upload multiple photos</h1><p>Choose up to 10 images. The whole batch is saved only if every image is valid.</p></div></div>
+      {{if .Uploaded}}<p class="success-message" role="status">Successfully uploaded {{.Uploaded}} photos. <a href="/admin">Manage photos</a></p>{{end}}
+      <section class="upload-panel" aria-labelledby="bulk-title">
+        <div class="panel-heading"><h2 id="bulk-title">Add a batch</h2></div>
+        <div class="panel-body">
+          <p>JPEG, PNG, GIF, or WebP. Maximum 15 MiB per image and 60 MiB total (61 MiB request including form data).</p>
+          <form method="post" action="/admin/bulk-upload" enctype="multipart/form-data">
+            <input type="hidden" name="csrf" value="{{.CSRF}}">
+            <div class="field"><label for="photos">Images (1–10)</label><input id="photos" type="file" name="photos" accept="image/jpeg,image/png,image/gif,image/webp" multiple required></div>
+            <div class="field"><label for="bulk-photo-title">Common title (optional)</label><input id="bulk-photo-title" type="text" name="title" maxlength="500"></div>
+            <button class="button-primary" type="submit">Upload photos</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

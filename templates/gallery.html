@@ -4,22 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Family gallery</title>
-  <style>
-    body { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; font: 16px system-ui, sans-serif; color: #222; }
-    header { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; margin-top:2rem; }
-    figure { margin:0; border:1px solid #ccc; padding:.5rem; } figure img { width:100%; max-height:280px; object-fit:contain; }
-    .gate { position:fixed; inset:0; background:#0009; display:grid; place-items:center; }
-    .dialog { background:white; padding:2rem; max-width:24rem; width:calc(100% - 5rem); }
-    label, input, button { display:block; margin:.6rem 0; } input { box-sizing:border-box; width:100%; padding:.55rem; }
-  </style>
+  <link rel="stylesheet" href="/static/site.css">
 </head>
 <body>
-  <header><h1>Family gallery</h1>{{if .Authenticated}}<form method="post" action="/logout"><input type="hidden" name="csrf" value="{{.CSRF}}"><button>Sign out</button></form>{{end}}</header>
-  {{if .Authenticated}}
-  {{if .Photos}}<main class="grid">{{range .Photos}}<figure><a href="/media/{{.ID}}" target="_blank" rel="noopener"><img src="/media/{{.ID}}" alt="{{.Label}}"></a>{{if .Label}}<figcaption>{{.Label}}</figcaption>{{end}}</figure>{{end}}</main>{{else}}<p>No photos have been shared yet.</p>{{end}}
-  {{else}}
-  <main class="gate"><section class="dialog" aria-labelledby="gate-title"><h2 id="gate-title">Family access</h2><p>Enter the shared family password to view photos.</p><form method="post" action="/login"><input type="hidden" name="csrf" value="{{.CSRF}}"><label for="password">Password</label><input id="password" type="password" name="password" required autocomplete="current-password"><button type="submit">View gallery</button></form></section></main>
-  {{end}}
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="identity">Family gallery</div>
+      <div class="header-meta">{{if .Authenticated}}<form method="post" action="/logout"><input type="hidden" name="csrf" value="{{.CSRF}}"><button class="button-quiet">Sign out</button></form>{{else}}<span class="header-note">A private collection</span>{{end}}</div>
+    </header>
+    {{if .Authenticated}}
+    <main class="family-gallery">
+      <section aria-labelledby="collection-title"><div class="section-heading"><h1 id="collection-title">Shared photos</h1><span>{{len .Photos}} photos</span></div>
+        {{if .Photos}}
+        <div class="tag-filters" role="group" aria-label="Filter photos by tag"><button class="tag-filter" type="button" data-filter="" aria-pressed="true">All</button>{{range .Tags}}<button class="tag-filter" type="button" data-filter="{{tagKey .}}" aria-pressed="false">{{.}}</button>{{end}}</div>
+        <p id="filter-empty" class="empty-state" role="status" hidden>No photos match this tag.</p>
+        <form id="selection-form" action="/photos/download" method="post">
+          <input type="hidden" name="csrf" value="{{.CSRF}}">
+          <div class="selection-bar"><p id="selection-status" role="status" aria-live="polite">Select photos to download together (up to 50). Selections remain checked across filters.</p><button class="selection-download" type="submit">Download selected</button></div>
+          <div class="photo-grid" aria-label="Shared family photos">{{range .Photos}}<figure class="photo-card gallery-card" data-tags="{{jsonTags .Tags}}"><div class="photo-frame"><a class="gallery-open" href="/media/{{.ID}}" data-photo-id="{{.ID}}" data-photo-title="{{.Title}}" aria-label="View photo{{if .Title}}: {{.Title}}{{end}}"><img src="/media/{{.ID}}" alt="{{.Title}}"></a></div><figcaption class="gallery-card-footer">{{if .Title}}<span class="caption-label" title="{{.Title}}">{{.Title}}</span>{{else}}<span class="caption-label">Family photo</span>{{end}}<label class="photo-select"><input type="checkbox" name="photo_id" value="{{.ID}}" aria-label="Select photo{{if .Title}}: {{.Title}}{{else}} {{.ID}}{{end}}"><span aria-hidden="true">Select</span></label></figcaption>{{if .Tags}}<div class="card-tags">{{range .Tags}}<span class="tag-chip">{{.}}</span>{{end}}</div>{{end}}</figure>{{end}}</div>
+        </form>
+        <dialog id="photo-dialog" class="photo-dialog" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title">Family photo</h2><form method="dialog"><button class="button-quiet" autofocus type="submit">Close</button></form></div><div class="dialog-image"><img id="dialog-photo" alt=""></div><div class="dialog-actions"><a id="dialog-download" class="download-link" href="#" download>Download photo</a></div></dialog>
+        {{else}}<div class="empty-state"><strong>Nothing here yet.</strong><p>No photos have been shared yet.</p></div>{{end}}
+      </section>
+    </main>
+    {{else}}
+    <main class="access-layout"><section class="access-card" aria-labelledby="gate-title"><div class="access-banner"><p class="eyebrow">A private collection</p><h1 id="gate-title">Family access</h1></div><div class="access-body"><p>Enter the shared family password to view photos.</p><form method="post" action="/login"><input type="hidden" name="csrf" value="{{.CSRF}}"><div class="field"><label for="password">Password</label><input id="password" type="password" name="password" required autocomplete="current-password"></div><button class="button-primary" type="submit">View gallery</button></form></div></section></main>
+    {{end}}
+  </div>
+  {{if .Authenticated}}{{if .Photos}}<script src="/static/gallery.js" defer></script>{{end}}{{end}}
 </body>
 </html>
