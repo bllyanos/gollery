@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -16,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -70,6 +72,9 @@ func env(k, fallback string) string {
 }
 
 func main() {
+	if err := loadDotEnv(".env"); err != nil {
+		log.Fatal(err)
+	}
 	cfg, err := loadConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -82,6 +87,56 @@ func main() {
 	server := &http.Server{Addr: cfg.addr, Handler: app.routes(), ReadHeaderTimeout: 5 * time.Second}
 	log.Printf("gollery listening on %s", cfg.addr)
 	log.Fatal(server.ListenAndServe())
+}
+
+// loadDotEnv loads KEY=VALUE settings from a local .env file without replacing
+// values already provided by the process environment. A missing file is fine.
+func loadDotEnv(path string) error {
+	file, err := os.Open(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("open %s: %w", path, err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for lineNumber := 1; scanner.Scan(); lineNumber++ {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, "=")
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
+		if !ok || key == "" || strings.ContainsAny(key, " \t") {
+			return fmt.Errorf("parse %s:%d: expected KEY=VALUE", path, lineNumber)
+		}
+		if strings.HasPrefix(value, `"`) || strings.HasSuffix(value, `"`) {
+			if len(value) < 2 || !strings.HasPrefix(value, `"`) || !strings.HasSuffix(value, `"`) {
+				return fmt.Errorf("parse %s:%d: unmatched double quote", path, lineNumber)
+			}
+			value, err = strconv.Unquote(value)
+			if err != nil {
+				return fmt.Errorf("parse %s:%d: %w", path, lineNumber, err)
+			}
+		} else if strings.HasPrefix(value, "'") || strings.HasSuffix(value, "'") {
+			if len(value) < 2 || value[0] != '\'' || value[len(value)-1] != '\'' {
+				return fmt.Errorf("parse %s:%d: unmatched single quote", path, lineNumber)
+			}
+			value = value[1 : len(value)-1]
+		}
+		if _, exists := os.LookupEnv(key); !exists {
+			if err := os.Setenv(key, value); err != nil {
+				return fmt.Errorf("set %s from %s:%d: %w", key, path, lineNumber, err)
+			}
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("read %s: %w", path, err)
+	}
+	return nil
 }
 
 func newApplication(cfg config) (*application, error) {

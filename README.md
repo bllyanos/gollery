@@ -11,15 +11,14 @@ SQLite is provided by [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqli
 
 ## Configure and run
 
-Set the required credentials and a random session-signing key before starting the server:
+For local development, copy the example environment file and start the app:
 
 ```sh
-export GOLLERY_FAMILY_PASSWORD='a-long-shared-family-password'
-export GOLLERY_ADMIN_USER='gallery-admin'
-export GOLLERY_ADMIN_PASSWORD='a-long-unique-admin-password'
-export GOLLERY_SESSION_KEY="$(openssl rand -hex 32)"
+cp .env.example .env
 go run .
 ```
+
+The application loads `.env` from its current working directory automatically, without replacing variables already set in the process environment. The example credentials and signing key are for local development only. Replace them with unique secrets before any shared or production use. `.env` is optional when configuring the process environment another way.
 
 Required settings:
 

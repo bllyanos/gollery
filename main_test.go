@@ -8,6 +8,42 @@ import (
 	"testing"
 )
 
+func TestLoadDotEnv(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".env")
+	key := "GOLLERY_TEST_DOTENV_VALUE"
+	fileKey := "GOLLERY_TEST_DOTENV_FILE"
+	t.Cleanup(func() { os.Unsetenv(fileKey) })
+	t.Setenv(key, "from-process")
+	if err := os.WriteFile(path, []byte("# comment\n"+fileKey+"='from-file'\n"+key+"=ignored\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := loadDotEnv(path); err != nil {
+		t.Fatal(err)
+	}
+	if got := os.Getenv(key); got != "from-process" {
+		t.Fatalf("existing process environment value = %q, want %q", got, "from-process")
+	}
+	if got := os.Getenv(fileKey); got != "from-file" {
+		t.Fatalf("loaded .env value = %q, want %q", got, "from-file")
+	}
+}
+
+func TestLoadDotEnvMissingFile(t *testing.T) {
+	if err := loadDotEnv(filepath.Join(t.TempDir(), ".missing-env")); err != nil {
+		t.Fatalf("missing .env should be ignored: %v", err)
+	}
+}
+
+func TestLoadDotEnvRejectsUnmatchedQuotes(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".env")
+	if err := os.WriteFile(path, []byte("GOLLERY_TEST_DOTENV_BAD=\"unterminated\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := loadDotEnv(path); err == nil {
+		t.Fatal("expected unmatched quote error")
+	}
+}
+
 func testApplication(t *testing.T) *application {
 	t.Helper()
 	dir := t.TempDir()
