@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Family gallery</title>
+  <style>
+    body { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; font: 16px system-ui, sans-serif; color: #222; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; margin-top:2rem; }
+    figure { margin:0; border:1px solid #ccc; padding:.5rem; } figure img { width:100%; max-height:280px; object-fit:contain; }
+    .gate { position:fixed; inset:0; background:#0009; display:grid; place-items:center; }
+    .dialog { background:white; padding:2rem; max-width:24rem; width:calc(100% - 5rem); }
+    label, input, button { display:block; margin:.6rem 0; } input { box-sizing:border-box; width:100%; padding:.55rem; }
+  </style>
+</head>
+<body>
+  <header><h1>Family gallery</h1>{{if .Authenticated}}<form method="post" action="/logout"><input type="hidden" name="csrf" value="{{.CSRF}}"><button>Sign out</button></form>{{end}}</header>
+  {{if .Authenticated}}
+  {{if .Photos}}<main class="grid">{{range .Photos}}<figure><a href="/media/{{.ID}}" target="_blank" rel="noopener"><img src="/media/{{.ID}}" alt="{{.Label}}"></a>{{if .Label}}<figcaption>{{.Label}}</figcaption>{{end}}</figure>{{end}}</main>{{else}}<p>No photos have been shared yet.</p>{{end}}
+  {{else}}
+  <main class="gate"><section class="dialog" aria-labelledby="gate-title"><h2 id="gate-title">Family access</h2><p>Enter the shared family password to view photos.</p><form method="post" action="/login"><input type="hidden" name="csrf" value="{{.CSRF}}"><label for="password">Password</label><input id="password" type="password" name="password" required autocomplete="current-password"><button type="submit">View gallery</button></form></section></main>
+  {{end}}
+</body>
+</html>

@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin sign in</title>
+<style>body{max-width:34rem;margin:4rem auto;padding:0 1rem;font:16px system-ui,sans-serif}label,input,button{display:block;margin:.7rem 0}input{box-sizing:border-box;width:100%;padding:.55rem}</style></head>
+<body><main><h1>Gallery administration</h1><form method="post" action="/admin/login"><input type="hidden" name="csrf" value="{{.CSRF}}"><label for="username">Username</label><input id="username" name="username" required autocomplete="username"><label for="password">Password</label><input id="password" type="password" name="password" required autocomplete="current-password"><button type="submit">Sign in</button></form><p><a href="/">Family gallery</a></p></main></body>
+</html>
